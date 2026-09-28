@@ -1,0 +1,42 @@
+name: Build Unsigned macOS App
+
+on:
+  workflow_dispatch:   # 只允许手动触发
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies (root)
+        run: bun install
+
+      - name: Install dependencies (desktop)
+        run: cd desktop && bun install
+
+      - name: Install dependencies (adapters)
+        run: cd adapters && bun install
+
+      - name: Build macOS package
+        run: |
+          cd desktop
+          bun run electron:package
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: desktop/build-artifacts/electron/*.dmg
+
+      - name: Upload ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-zip
+          path: desktop/build-artifacts/electron/*.zip
