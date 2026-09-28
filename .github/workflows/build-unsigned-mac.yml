@@ -15,6 +15,15 @@ jobs:
         with:
           bun-version: latest
 
+      # --- 参考官方构建环境，安装 cu-helper 编译所需的系统依赖 ---
+      - name: Install system dependencies for native builds
+        run: |
+          brew update
+          brew install cmake ninja pkg-config
+          # 如果后续报错提示缺少其他库，可以在此处继续添加
+          # 例如：brew install openssl
+
+      # --- 安装项目依赖（参考官方 CI 的修复提交）---
       - name: Install dependencies (root)
         run: bun install
 
@@ -24,11 +33,13 @@ jobs:
       - name: Install dependencies (adapters)
         run: cd adapters && bun install
 
+      # --- 构建 macOS 包 ---
       - name: Build macOS package
         run: |
           cd desktop
           bun run electron:package
 
+      # --- 上传构建产物 ---
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
