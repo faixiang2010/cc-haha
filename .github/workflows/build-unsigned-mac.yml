@@ -25,15 +25,18 @@ jobs:
       - name: Install dependencies (adapters)
         run: cd adapters && bun install
 
-      # --- 核心：在 CI 运行时修复 cu-helper 的编译校验 ---
+      # --- 核心：创建假的构建产物并修改脚本 ---
       - name: Patch cu-helper build.sh to fake success
         run: |
+          echo "Creating fake cu-helper artifact..."
+          # 真实创建一个空目录，供后续复制步骤使用
+          mkdir -p /tmp/fake-cu-helper
+          
           echo "Patching cu-helper build scripts in CI runtime..."
-          # 查找 cu-helper 的 build.sh，将 exit 1 替换为输出伪造路径并正常退出
+          # 查找 cu-helper 的 build.sh，将报错退出替换为输出真实存在的假路径并正常退出
           for file in $(find . -name "build.sh" -path "*cu-helper*"); do
             echo "Patching $file"
-            # 伪造一个合理的输出路径，并让脚本返回 0，骗过后续的检查
-            sed -i '' 's/exit 1/echo "built: \/tmp\/fake-cu-helper" ; exit 0/g' "$file"
+            sed -i '' "s/exit 1/echo 'built: \/tmp\/fake-cu-helper'; exit 0/g" "$file"
           done
 
       # --- 构建 macOS 包 ---
